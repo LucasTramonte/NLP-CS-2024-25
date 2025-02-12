@@ -4,8 +4,7 @@ pandas
 scikit-learn
 matplotlib
 seaborn
-tensorflow
-keras
+torch
 spacy
 gensim
 jupyter
