@@ -1,8 +1,4 @@
 import os
-# `import zipfile` is importing the Python standard library module `zipfile`, which provides tools for
-# creating, reading, writing, and listing contents of ZIP files. In the provided code snippet, the
-# `zipfile` module is used to create a ZIP file containing the submission CSV file for a Kaggle
-# competition in the `generate_submission` method of the `LanguageClassifier_BERT` class.
 import zipfile
 import logging
 import pandas as pd

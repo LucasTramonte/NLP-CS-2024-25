@@ -15,32 +15,17 @@ The main goal of this competition is to build an effective text classifier.
 
 ## Usage
 
-1. **Create a virtual environment**:
-    ```sh
-    python -m venv venv
-    ```
-
-2. **Activate the virtual environment**:
-    - On Windows:
-        ```sh
-        .\.venv\Scripts\activate
-        ```
-    - On macOS and Linux:
-        ```sh
-        source venv/bin/activate
-        ```
-
-3. **Install the required packages**:
+1. **Install the required packages**:
     ```sh
     pip install -r requirements.txt
     ```
 
-4. **Run the main script**:
+2. **Run the main script**:
     - To train the model:
         ```sh
         python main.py --train_dataset Assets/Data/train_submission.csv --train
         ```
-    - To evaluate the model (TO DO - We have to split the data into train and test): 
+    - To evaluate the model: 
         ```sh
         python main.py --test_dataset Assets/Data/test_submission.csv --evaluate
         ```
