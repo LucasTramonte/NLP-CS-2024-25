@@ -1,4 +1,5 @@
 import os
+import zipfile
 import logging
 import pandas as pd
 import argparse
@@ -16,7 +17,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class LanguageClassifier_TFIDF:
-    def __init__(self, max_features=10000, test_size=0.2, random_state=42):
+    def __init__(self, max_features=10000, test_size=0.3, random_state=42):
         self.max_features = max_features
         self.test_size = test_size
         self.random_state = random_state
@@ -44,23 +45,22 @@ class LanguageClassifier_TFIDF:
         Trains the model using the provided data.
         """
         logger.info("Starting training...")
-        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=self.test_size, random_state=self.random_state)
-        self.pipeline.fit(X_train, y_train)
-        val_score = self.pipeline.score(X_val, y_val)
-        logger.info(f"Validation accuracy: {val_score:.4f}")
+        for _ in tqdm(range(1), desc="Training model"):
+            self.pipeline.fit(X, y)
         self.save_model()
         logger.info("Training complete.")
 
     def save_model(self):
-        os.makedirs('Assets/Outputs', exist_ok=True)
-        joblib.dump(self.pipeline, 'Assets/Outputs/tfidf_model.pkl')
-        joblib.dump(self.label_encoder, 'Assets/Outputs/label_encoder.pkl')
+        model_dir = 'Assets/Outputs/Models/LogisticRegression'
+        os.makedirs(model_dir, exist_ok=True)
+        joblib.dump(self.pipeline, os.path.join(model_dir, 'tfidf_model.pkl'))
+        joblib.dump(self.label_encoder, os.path.join(model_dir, 'label_encoder.pkl'))
         self.is_trained = True
         logger.info("Model and LabelEncoder trained and saved successfully.")
 
     def load_model(self):
-        model_path = 'Assets/Outputs/tfidf_model.pkl'
-        label_encoder_path = 'Assets/Outputs/label_encoder.pkl'
+        model_path = 'Assets/Outputs/Models/LogisticRegression/tfidf_model.pkl'
+        label_encoder_path = 'Assets/Outputs/Models/LogisticRegression/label_encoder.pkl'
 
         if os.path.exists(model_path) and os.path.exists(label_encoder_path):
             logger.info("Loading saved model and label encoder...")
@@ -81,20 +81,22 @@ class LanguageClassifier_TFIDF:
             self.load_model()
 
         logger.info("Starting evaluation...")
-        predictions = self.pipeline.predict(X)
-        report = classification_report(y, predictions, target_names=self.label_encoder.classes_)
+        predictions = []
+        for text in tqdm(X, desc="Evaluating model"):
+            predictions.append(self.pipeline.predict([text])[0])
+        report = classification_report(y, predictions)
         matrix = confusion_matrix(y, predictions)
 
         logger.info("Classification Report:\n" + report)
         logger.info("Confusion Matrix:\n" + str(matrix))
         
         try:
-            with open('Assets/Outputs/evaluation_report_TFIDF.txt', 'w') as f:
+            with open('Assets/Outputs/Evaluation/evaluation_report_TFIDF.txt', 'w') as f:
                 f.write("Classification Report:\n")
                 f.write(report)
                 f.write("\nConfusion Matrix:\n")
                 f.write(str(matrix))
-            logger.info("Evaluation report saved to Assets/Outputs/evaluation_report_TFIDF.txt")
+            logger.info("Evaluation report saved to Assets/Outputs/Evaluation/evaluation_report_TFIDF.txt")
         except Exception as e:
             logger.error(f"Error while saving the evaluation report: {e}")
     
@@ -105,10 +107,10 @@ class LanguageClassifier_TFIDF:
         if not self.is_trained:
             try:
                 logger.info("Loading model and LabelEncoder for prediction...")
-                self.pipeline = joblib.load('Assets/Outputs/tfidf_model.pkl')
-                self.label_encoder = joblib.load('Assets/Outputs/label_encoder.pkl')
+                self.pipeline = joblib.load('Assets/Outputs/Models/LogisticRegression/tfidf_model.pkl')
+                self.label_encoder = joblib.load('Assets/Outputs/Models/LogisticRegression/label_encoder.pkl')
                 self.is_trained = True
-                logger.info("Model and LabelEncoder loaded successfully from 'Assets/Outputs/tfidf_model.pkl'.")
+                logger.info("Model and LabelEncoder loaded successfully from 'Assets/Outputs/Models/LogisticRegression/tfidf_model.pkl'.")
             except Exception as e:
                 logger.error(f"Error loading the trained model or LabelEncoder: {e}")
                 return None
@@ -137,8 +139,18 @@ class LanguageClassifier_TFIDF:
             predictions.append(predicted_language)
 
         submission_df = pd.DataFrame({'ID': test_data['ID'], 'Label': predictions})
-        submission_df.to_csv(submission_path, index=False)
-        logger.info(f"Submission file saved to {submission_path}")
+        
+        submission_dir = 'Assets/Outputs/Submission'
+        os.makedirs(submission_dir, exist_ok=True)
+        submission_file_path = os.path.join(submission_dir, submission_path)
+        submission_df.to_csv(submission_file_path, index=False)
+        logger.info(f"Submission file saved to {submission_file_path}")
+
+        # Create a zip file of the submission CSV
+        zip_file_path = submission_file_path.replace('.csv', '.zip')
+        with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            zipf.write(submission_file_path, os.path.basename(submission_file_path))
+        logger.info(f"Submission file zipped to {zip_file_path}")
 
     def remove_duplicates(self, data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -179,16 +191,19 @@ def main():
         predicted_language = classifier.predict_language(args.predict)
         logger.info(f"Predicted Language: {predicted_language}")
 
-    # TO MODIFY : SPLIT INTO TRAIN AND TEST
     if args.evaluate:
-        if not args.test_dataset:
-            raise ValueError("Please provide a test dataset path with --test_dataset when evaluating the model.")
+        if not args.train_dataset:
+            raise ValueError("Please provide a train dataset path with --train_dataset when evaluating the model.")
         
-        logger.info(f"Loading test dataset from {args.test_dataset}...")
-        data = pd.read_csv(args.test_dataset)
+        logger.info(f"Loading test dataset from {args.train_dataset}...")
+        data = pd.read_csv(args.train_dataset)
         data = classifier.remove_duplicates(data)
         X, y = classifier.preprocess_data(data)
-        classifier.evaluate(X, y)
+        
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=classifier.test_size, random_state=classifier.random_state)
+        
+        classifier.train(X_train, y_train)
+        classifier.evaluate(X_test, y_test)
         logger.info("Evaluation completed.")
         print("Evaluation completed.")
 

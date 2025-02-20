@@ -1,11 +1,15 @@
 import os
+# `import zipfile` is importing the Python standard library module `zipfile`, which provides tools for
+# creating, reading, writing, and listing contents of ZIP files. In the provided code snippet, the
+# `zipfile` module is used to create a ZIP file containing the submission CSV file for a Kaggle
+# competition in the `generate_submission` method of the `LanguageClassifier_BERT` class.
+import zipfile
 import logging
 import pandas as pd
 import argparse
 import torch
 import joblib
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import classification_report, confusion_matrix
 from torch.utils.data import DataLoader, Dataset
 from transformers import CamembertTokenizer, CamembertForSequenceClassification, get_linear_schedule_with_warmup
 from tqdm import tqdm
@@ -129,16 +133,17 @@ class LanguageClassifier_BERT:
         logger.info("Training complete.")
 
     def save_model(self):
-        os.makedirs('Assets/Outputs', exist_ok=True)
-        self.model.save_pretrained('Assets/Outputs/camembert_model')
-        self.tokenizer.save_pretrained('Assets/Outputs/camembert_model')
-        joblib.dump(self.label_encoder, 'Assets/Outputs/label_encoder.pkl')
+        model_dir = 'Assets/Outputs/Models/Camembert'
+        os.makedirs(model_dir, exist_ok=True)
+        self.model.save_pretrained('Assets/Outputs/Models/Camembert/camembert_model')
+        self.tokenizer.save_pretrained('Assets/Outputs/Models/Camembert/camembert_model')
+        joblib.dump(self.label_encoder, os.path.join(model_dir, 'label_encoder.pkl'))
         self.is_trained = True
         logger.info("Model and LabelEncoder trained and saved successfully.")
 
     def load_model(self):
-        model_dir = 'Assets/Outputs/camembert_model'
-        label_encoder_path = 'Assets/Outputs/label_encoder.pkl'
+        model_dir = 'Assets/Outputs/Models/Camembert/camembert_model'
+        label_encoder_path = 'Assets/Outputs/Models/Camembert/label_encoder.pkl'
 
         if os.path.exists(model_dir) and os.path.exists(label_encoder_path):
             logger.info("Loading saved model, tokenizer, and label encoder...")
@@ -150,47 +155,6 @@ class LanguageClassifier_BERT:
         else:
             logger.error("Model directory or label encoder file not found. Please train the model first.")
             raise FileNotFoundError("Model directory or label encoder file not found.")
-        
-    def evaluate(self, encodings, y):
-        """
-        Evaluates the model using a test dataset.
-        """
-        if not self.is_trained:
-            logger.error("Model not trained. Please train the model first.")
-            self.load_model()
-
-        logger.info("Starting evaluation...")
-        dataset = self.LanguageDataset(encodings, y)
-        dataloader = DataLoader(dataset, batch_size=self.batch_size)
-
-        self.model.eval()
-        predictions = []
-        true_labels = []
-
-        for batch in dataloader:
-            batch = {k: v.to(self.device) for k, v in batch.items()}
-            with torch.no_grad():
-                outputs = self.model(**batch)
-                logits = outputs.logits
-                preds = torch.argmax(logits, dim=1)
-                predictions.extend(preds.cpu().numpy())
-                true_labels.extend(batch['labels'].cpu().numpy())
-
-        report = classification_report(true_labels, predictions, target_names=self.label_encoder.classes_)
-        matrix = confusion_matrix(true_labels, predictions)
-
-        logger.info("Classification Report:\n" + report)
-        logger.info("Confusion Matrix:\n" + str(matrix))
-        
-        try:
-            with open('Assets/Outputs/evaluation_report_Camembert.txt', 'w') as f:
-                f.write("Classification Report:\n")
-                f.write(report)
-                f.write("\nConfusion Matrix:\n")
-                f.write(str(matrix))
-            logger.info("Evaluation report saved to Assets/Outputs/evaluation_report_Camembert.txt")
-        except Exception as e:
-            logger.error(f"Error while saving the evaluation report: {e}")
     
     def predict_language(self, text):
         """
@@ -199,11 +163,11 @@ class LanguageClassifier_BERT:
         if not self.is_trained:
             try:
                 logger.info("Loading model and LabelEncoder for prediction...")
-                self.model = CamembertForSequenceClassification.from_pretrained('Assets/Outputs/camembert_model', num_labels=390).to(self.device)
-                self.tokenizer = CamembertTokenizer.from_pretrained('Assets/Outputs/camembert_model')
-                self.label_encoder = joblib.load('Assets/Outputs/label_encoder.pkl')
+                self.model = CamembertForSequenceClassification.from_pretrained('Assets/Outputs/Models/Camembert/camembert_model', num_labels=390).to(self.device)
+                self.tokenizer = CamembertTokenizer.from_pretrained('Assets/Outputs/Models/Camembert/camembert_model')
+                self.label_encoder = joblib.load('Assets/Outputs/Models/Camembert/label_encoder.pkl')
                 self.is_trained = True
-                logger.info("Model and LabelEncoder loaded successfully from 'Assets/Outputs/camembert_model'.")
+                logger.info("Model and LabelEncoder loaded successfully from 'Assets/Outputs/Models/Camembert/camembert_model'.")
             except Exception as e:
                 logger.error(f"Error loading the trained model or LabelEncoder: {e}")
                 return None
@@ -239,8 +203,18 @@ class LanguageClassifier_BERT:
             predictions.append(predicted_language)
 
         submission_df = pd.DataFrame({'ID': test_data['ID'], 'Label': predictions})
-        submission_df.to_csv(submission_path, index=False)
-        logger.info(f"Submission file saved to {submission_path}")
+        
+        submission_dir = 'Assets/Outputs/Submission'
+        os.makedirs(submission_dir, exist_ok=True)
+        submission_file_path = os.path.join(submission_dir, submission_path)
+        submission_df.to_csv(submission_file_path, index=False)
+        logger.info(f"Submission file saved to {submission_file_path}")
+
+        # Create a zip file of the submission CSV
+        zip_file_path = submission_file_path.replace('.csv', '.zip')
+        with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            zipf.write(submission_file_path, os.path.basename(submission_file_path))
+        logger.info(f"Submission file zipped to {zip_file_path}")
 
     def remove_duplicates(self, data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -259,7 +233,6 @@ def main():
     parser.add_argument('--test_dataset', type=str, help='Path to the CSV test dataset')
     parser.add_argument('--predict', type=str, help='Text input to predict the language')
     parser.add_argument('--train', action='store_true', help='Flag to train the model')
-    parser.add_argument('--evaluate', action='store_true', help='Flag to evaluate the model')
     parser.add_argument('--submission', type=str, help='Path to save the submission file')
     args = parser.parse_args()
 
@@ -280,19 +253,6 @@ def main():
         logger.info(f"Predicting language for input text: {args.predict}")
         predicted_language = classifier.predict_language(args.predict)
         logger.info(f"Predicted Language: {predicted_language}")
-
-    # TO MODIFY : SPLIT INTO TRAIN AND TEST
-    if args.evaluate:
-        if not args.test_dataset:
-            raise ValueError("Please provide a test dataset path with --test_dataset when evaluating the model.")
-        
-        logger.info(f"Loading test dataset from {args.test_dataset}...")
-        data = pd.read_csv(args.test_dataset)
-        data = classifier.remove_duplicates(data)
-        encodings, y = classifier.preprocess_data(data)
-        classifier.evaluate(encodings, y)
-        logger.info("Evaluation completed.")
-        print("Evaluation completed.")
 
     if args.submission:
         if not args.test_dataset:
