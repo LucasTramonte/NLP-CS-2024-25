@@ -1,2 +1,7 @@
 .env
 .venv/
+
+Assets/Outputs/Models/
+Assets/Outputs/Submission/
+Assets/Data/
+

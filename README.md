@@ -4,7 +4,7 @@ Code developed for CentraleSupélec Kaggle competition in the Advanced NLP cours
 ---
 
 <div style="display: flex; gap: 10px;">
-  <a href="https://www.kaggle.com/competitions/nlp-cs-2024-25">[Kaggle competition]</a>
+  <a href="https://www.kaggle.com/competitions/nlp-cs-2025/overview">[Kaggle competition]</a>
   <a href="https://github.com/PierreColombo/NLP-CS-2024-25/tree/main/kaggle_project">[Instructions]</a>
   <a href="https://plmlatex.math.cnrs.fr/3164218448nqxdntshvkgm">[Report]</a>
 </div>
@@ -13,3 +13,42 @@ Code developed for CentraleSupélec Kaggle competition in the Advanced NLP cours
 
 The main goal of this competition is to build an effective text classifier.
 
+## Usage
+
+1. **Create a virtual environment**:
+    ```sh
+    python -m venv venv
+    ```
+
+2. **Activate the virtual environment**:
+    - On Windows:
+        ```sh
+        .\.venv\Scripts\activate
+        ```
+    - On macOS and Linux:
+        ```sh
+        source venv/bin/activate
+        ```
+
+3. **Install the required packages**:
+    ```sh
+    pip install -r requirements.txt
+    ```
+
+4. **Run the main script**:
+    - To train the model:
+        ```sh
+        python main.py --train_dataset Assets/Data/train_submission.csv --train
+        ```
+    - To evaluate the model (TO DO - We have to split the data into train and test): 
+        ```sh
+        python main.py --test_dataset Assets/Data/test_submission.csv --evaluate
+        ```
+    - To predict the language of a single text:
+        ```sh
+        python main.py --predict "Your text here"
+        ```
+    - To generate a submission file:
+        ```sh
+        python main.py --test_dataset Assets/Data/test_submission.csv --submission Assets/Outputs/submission.csv
+        ```
