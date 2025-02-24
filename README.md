@@ -1,4 +1,5 @@
 # NLP-CS-2024-25
+
 Code developed for CentraleSupélec Kaggle competition in the Advanced NLP course
 
 ---
@@ -20,20 +21,37 @@ The main goal of this competition is to build an effective text classifier.
     pip install -r requirements.txt
     ```
 
-2. **Run the main script**:
-    - To train the model:
+2. **Run the scripts**:
+    - To train the any model:
         ```sh
-        python main.py --train_dataset Assets/Data/train_submission.csv --train
+        python <model_script>.py --train_dataset Assets/Data/train_submission.csv --train
         ```
-    - To evaluate the model: 
+    - To predict the language of a single text using any model:
         ```sh
-        python main.py --test_dataset Assets/Data/test_submission.csv --evaluate
+        python <model_script>.py --predict "Your text here"
         ```
-    - To predict the language of a single text:
+        Replace `<model_script>` with the appropriate script name (e.g., Camembert.py, classifier_Tfidf_LR.py, XLM-RoBERTa.py, classifier_Tfidf_Xgboost.py).
+    - To generate a submission file using any model:
         ```sh
-        python main.py --predict "Your text here"
+        python <model_script>.py --test_dataset Assets/Data/test_submission.csv --submission Assets/Outputs/submission.csv
         ```
-    - To generate a submission file:
-        ```sh
-        python main.py --test_dataset Assets/Data/test_submission.csv --submission Assets/Outputs/submission.csv
-        ```
+
+We are utilizing the [DCE](https://dce.pages.centralesupelec.fr/) GPU provided by CentraleSupélec for training our models.
+
+## Models
+
+This project includes implementations of several models for language classification:
+
+| Model                          | Evaluation Accuracy  | Kaggle Accuracy                                           |
+|--------------------------------|-----------|-------------------|
+| **CamemBERT**                  | -   | 0.70534 |
+| **TF-IDF with Logistic Regression** | -   | 0.71067 |
+| **XLM-RoBERTa**                | -   | 0.88269 |
+| **TF-IDF with XGBoost**        | -         | - |
+
+## To Do (just ideas)
+
+- Drop out to reduce overfit
+- Evaluate all models to compare with Kaggle Accuracy 
+- Submit XGBoost
+- Modularize the codes with Tfidf

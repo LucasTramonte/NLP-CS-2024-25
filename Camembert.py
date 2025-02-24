@@ -9,7 +9,7 @@ from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import DataLoader, Dataset
 from transformers import CamembertTokenizer, CamembertForSequenceClassification, get_linear_schedule_with_warmup
 from tqdm import tqdm
-from torch.cuda.amp import GradScaler, autocast  # Correct import for mixed precision training
+from torch.amp import GradScaler, autocast
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -94,7 +94,7 @@ class LanguageClassifierBERT:
         best_loss = float('inf')
 
         # Initialize GradScaler for mixed precision training
-        scaler = GradScaler()
+        scaler = GradScaler('cuda')
 
         for epoch in range(self.epochs):
             self.model.train()
@@ -105,7 +105,7 @@ class LanguageClassifierBERT:
                 optimizer.zero_grad()
 
                 # Mixed precision training
-                with autocast():
+                with autocast('cuda'):
                     outputs = self.model(**batch)
                     loss = criterion(outputs.logits, batch['labels'])
 
