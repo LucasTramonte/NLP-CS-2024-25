@@ -1,6 +1,8 @@
 # NLP-CS-2024-25
 
-![Word cloud](Assets/Images/word_cloud-removebg-preview.png)
+<p align="center">
+  <img src="Assets/Images/word_cloud-removebg-preview.png" alt="Word cloud" width="300">
+</p>
 
 Code developed for CentraleSupélec Kaggle competition in the Advanced NLP course
 
