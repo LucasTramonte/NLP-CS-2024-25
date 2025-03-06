@@ -34,7 +34,7 @@ The main goal of this competition is to build an effective text classifier.
         ```sh
         python <model_script>.py --predict "Your text here"
         ```
-        Replace `<model_script>` with the appropriate script name (e.g., Camembert.py, classifier_Tfidf_LR.py, XLM-RoBERTa.py, classifier_Tfidf_Xgboost.py).
+        Replace `<model_script>` with the appropriate script name (e.g., classifier_Tfidf_LR.py, XLM-RoBERTa.py).
     - To generate a submission file using any model:
         ```sh
         python <model_script>.py --test_dataset Assets/Data/test_submission.csv --submission Assets/Outputs/submission.csv
@@ -46,22 +46,24 @@ We are utilizing the [DCE](https://dce.pages.centralesupelec.fr/) GPU provided b
 
 The dataset used in this competition consists of three columns: `Usage`, `Text`, and `Label`. There are 390 languages in the training data, with the top 20 being:
 
-![Top 20 Languages](Assets/Outputs/EDA/top_20_languages.png)
+<p align="center">
+  <img src="Assets/Outputs/EDA/top_20_languages.png" alt="Word cloud" width="700">
+</p>
+
+Comparative analysis of the word count distribution between the training and test datasets:
+
+<p align="center">
+  <img src="Assets/Outputs/EDA/train_vs_test_word_count_bins_percent.png" alt="Word cloud" width="700">
+</p>
 
 
-## Models
+## Results
 
-This project includes implementations of several models for language classification:
+| Model                          | Kaggle Accuracy               |
+|--------------------------------|-----------|
+| **TF-IDF with Logistic Regression** | 0.71067 |
+| **XLM-RoBERTa**               | 0.88269 |
 
-| Model                          | Evaluation Accuracy  | Kaggle Accuracy                                           |
-|--------------------------------|-----------|-------------------|
-| **TF-IDF with Logistic Regression** | -   | 0.71067 |
-| **XLM-RoBERTa**                | -   | 0.88269 |
-| **TF-IDF with XGBoost**        | -         | - |
+## References
 
-## To Do (just ideas)
-
-- Drop out to reduce overfit
-- Evaluate all models to compare with Kaggle Accuracy 
-- Submit XGBoost
-- Modularize the codes with Tfidf
+1. Alexis Conneau, Kartikay Khandelwal, Naman Goyal,Vishrav Chaudhary, Guillaume Wenzek, FranciscoGuzmán,  Edouard  Grave,  Myle  Ott,  Luke  Zettle-moyer, and Veselin Stoyanov. 2020.  Unsupervisedcross-lingual representation learning at scale
