@@ -1,0 +1,22 @@
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 190600 entries, 0 to 190599
+Data columns (total 3 columns):
+ #   Column  Non-Null Count   Dtype 
+---  ------  --------------   ----- 
+ 0   Usage   190600 non-null  object
+ 1   Text    190600 non-null  object
+ 2   Label   190100 non-null  object
+dtypes: object(3)
+memory usage: 4.4+ MB
+
+Missing values in each column:
+Usage      0
+Text       0
+Label    500
+dtype: int64
+
+Number of duplicated rows:
+0
+
+Number of unique languages:
+390

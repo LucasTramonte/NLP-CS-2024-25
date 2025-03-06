@@ -1,5 +1,7 @@
 # NLP-CS-2024-25
 
+![Word cloud](Assets/Images/word_cloud-removebg-preview.png)
+
 Code developed for CentraleSupélec Kaggle competition in the Advanced NLP course
 
 ---
@@ -38,13 +40,19 @@ The main goal of this competition is to build an effective text classifier.
 
 We are utilizing the [DCE](https://dce.pages.centralesupelec.fr/) GPU provided by CentraleSupélec for training our models.
 
+## Data
+
+The dataset used in this competition consists of three columns: `Usage`, `Text`, and `Label`. There are 390 languages in the training data, with the top 20 being:
+
+![Top 20 Languages](Assets/Outputs/EDA/top_20_languages.png)
+
+
 ## Models
 
 This project includes implementations of several models for language classification:
 
 | Model                          | Evaluation Accuracy  | Kaggle Accuracy                                           |
 |--------------------------------|-----------|-------------------|
-| **CamemBERT**                  | -   | 0.70534 |
 | **TF-IDF with Logistic Regression** | -   | 0.71067 |
 | **XLM-RoBERTa**                | -   | 0.88269 |
 | **TF-IDF with XGBoost**        | -         | - |
