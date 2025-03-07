@@ -37,25 +37,25 @@ The main goal of this competition is to build an effective text classifier.
         Replace `<model_script>` with the appropriate script name (e.g., classifier_Tfidf_LR.py, XLM-RoBERTa.py).
     - To generate a submission file using any model:
         ```sh
-        python <model_script>.py --test_dataset Assets/Data/test_submission.csv --submission Assets/Outputs/submission.csv
+        python <model_script>.py --test_dataset Assets/Data/test_without_labels.csv --submission submission.csv
         ```
 
 We are utilizing the [DCE](https://dce.pages.centralesupelec.fr/) GPU provided by CentraleSupélec for training our models.
 
 ## Data
 
-The dataset used in this competition consists of three columns: `Usage`, `Text`, and `Label`. There are 390 languages in the training data, with the top 20 being:
+The dataset used in this competition consists of three columns: `Usage`, `Text`, and `Label`. There are 389 languages in the training data, with the top 20 being:
 
 <p align="center">
   <img src="Assets/Outputs/EDA/top_20_languages.png" alt="Word cloud" width="700">
 </p>
 
-Comparative analysis of the word count distribution between the training and test datasets:
+## Comparative Analysis Between the Training and Test Datasets
 
 <p align="center">
-  <img src="Assets/Outputs/EDA/train_vs_test_word_count_bins_percent.png" alt="Word cloud" width="700">
+  <img src="Assets/Outputs/EDA/train_vs_test_distribution_top10_percent.png" alt="Top 10 Language Distribution" width="48%">
+  <img src="Assets/Outputs/EDA/train_vs_test_word_count_bins_percent.png" alt="Word Count Bins Distribution" width="48%">
 </p>
-
 
 ## Results
 

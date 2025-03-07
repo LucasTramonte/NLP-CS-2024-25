@@ -66,7 +66,7 @@ plt.title("Word Count Distribution: Train vs. Test (in %)")
 plt.legend(loc="lower right")
 plt.gca().invert_yaxis()  # So the first bin appears at the top
 plt.tight_layout()
-plt.savefig("train_vs_test_word_count_bins_percent.png", dpi=300)
+plt.savefig("../Assets/Outputs/EDA/train_vs_test_word_count_bins_percent.png", dpi=300)
 plt.close()
 
 print("\nAnalysis completed. Word count distribution saved as 'train_vs_test_word_count_bins_percent.png'.")

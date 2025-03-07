@@ -1,39 +1,21 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
+import pycountry
+import os
+import io
 
 ###############################################################################
-# 1) Map language codes to real names (including newly requested codes)
+# 1) Function to get language name from ISO 639-3 code
 ###############################################################################
-language_map = {
-    "hau": "Hausa",
-    "nob": "Norwegian Bokmål",
-    "wln": "Walloon",
-    "quh": "Quechua",
-    "scn": "Sicilian",
-    "uzb": "Uzbek",
-    "roh": "Romansh",
-    "ayr": "Aymara",
-    "rmy": "Romani",
-    "ven": "Venda",
-    "epo": "Esperanto",
-    "tgk": "Tajik",
-    "gom": "Goan Konkani",
-    "kat": "Georgian",
-    "kaa": "Karakalpak",
-    "mon": "Mongolian",
-    "hin": "Hindi",
-    "tat": "Tatar",
-    "guj": "Gujarati",
-    "crh": "Crimean Tatar",
-    "som": "Somali",
-    "uig": "Uyghur",
-    "kur": "Kurdish",
-}
 
-def get_language_name(code):
-    """Return a mapped language name if available; otherwise, return the code itself."""
-    return language_map.get(code, code)
+def get_language_name(iso_code):
+    try:
+        language_name = pycountry.languages.get(alpha_3=iso_code).name
+        return f"{language_name} ({iso_code})"
+    except AttributeError:
+        return iso_code
 
 ###############################################################################
 # 2) Load the data
@@ -43,6 +25,29 @@ pred_df  = pd.read_csv("../Assets/Outputs/Submission/submission_file.csv")   # M
 
 train_total = len(train_df)
 test_total  = len(pred_df)
+
+# Capture the output of df.info()
+buffer = io.StringIO()
+train_df.info(buf=buffer)
+info_str = buffer.getvalue()
+
+# Save dataset information to a text file
+with open("../Assets/Outputs/EDA/dataset_info.txt", "w") as f:
+    f.write(info_str)
+    f.write("\n")
+    f.write("Missing values in each column:\n")
+    f.write(str(train_df.isnull().sum()))
+    f.write("\n\n")
+    f.write("Number of duplicated rows:\n")
+    f.write(str(train_df.duplicated().sum()))
+    f.write("\n\n")
+    f.write("Number of unique languages:\n")
+    f.write(str(train_df["Label"].nunique()))
+
+# Print missing values, duplicated rows, and unique languages
+print("Missing values in each column:",train_df.isnull().sum())
+print("Number of duplicated rows:", train_df.duplicated().sum())
+print("Number of unique languages:",train_df["Label"].nunique())
 
 ###############################################################################
 # 3) Training distribution (Top 10) by frequency
@@ -120,7 +125,35 @@ plt.title("Comparison of Language Distribution (Union of Top 10)")
 plt.legend(loc="lower right")
 plt.gca().invert_yaxis()
 plt.tight_layout()
-plt.savefig("train_vs_test_distribution_top10_percent.png", dpi=300)
+plt.savefig("../Assets/Outputs/EDA/train_vs_test_distribution_top10_percent.png", dpi=300)
 plt.close()
 
-print("\nAnalysis completed. All plots have been saved as PNG files.")
+###############################################################################
+# 6) Train data distribution (Top 20) by frequency
+###############################################################################
+
+# Convert ISO codes to "Language (Code)" format
+train_df["Language Name"] = train_df["Label"].astype(str).apply(get_language_name)
+
+# Count occurrences and calculate percentages
+label_counts = train_df["Language Name"].value_counts(normalize=True) * 100
+
+# Select top 20 languages
+top_labels = label_counts.head(20)
+
+# Create a horizontal bar chart
+plt.figure(figsize=(14, 8))  
+ax = sns.barplot(y=top_labels.index, x=top_labels.values, hue=top_labels.index, palette="viridis", legend=False)
+
+plt.xlabel("Percentage (%)")
+plt.ylabel("Language")
+plt.title("Top 20 Most Frequent Languages (Percentage)")
+
+# Add percentage labels inside bars
+for i, value in enumerate(top_labels.values):
+    ax.text(value - 0.05, i, f"{value:.2f}%", va="center", ha="right", fontsize=10, color="white", fontweight="bold")
+
+# Adjust layout to prevent cut-off
+plt.tight_layout()
+plt.savefig("../Assets/Outputs/EDA/top_20_languages.png")
+plt.show()

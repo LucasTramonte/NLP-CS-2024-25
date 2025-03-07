@@ -192,20 +192,13 @@ class LanguageClassifierTFIDF:
         logger.info(f"Submission file zipped to {zip_file_path}")
 
     @staticmethod
-    def remove_duplicates(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Remove duplicate rows from the dataset.
-
-        Args:
-            data (pd.DataFrame): The dataset to clean.
-
-        Returns:
-            pd.DataFrame: The cleaned dataset.
-        """
-        logger.info("Removing duplicate rows...")
+    def handle_missing_labels(data: pd.DataFrame) -> pd.DataFrame:
+        """Removes rows with missing labels from the dataset."""
+        logger.info("Removing rows with missing labels...")
         initial_row_count = data.shape[0]
-        data = data.drop_duplicates()
-        logger.info(f"Removed {initial_row_count - data.shape[0]} duplicate rows.")
+        data = data.dropna(subset=['Label'])
+        final_row_count = data.shape[0]
+        logger.info(f"Removed {initial_row_count - final_row_count} rows with missing labels.")
         return data
 
 
@@ -225,7 +218,7 @@ def main():
         if not args.train_dataset:
             raise ValueError("Please provide a training dataset path with --train_dataset when training the model.")
         data = pd.read_csv(args.train_dataset)
-        data = classifier.remove_duplicates(data)
+        data = classifier.handle_missing_labels(data)
         X, y = classifier.preprocess_data(data)
         classifier.train(X, y)
 
