@@ -35,7 +35,7 @@ class LanguageDataset(Dataset):
 class LanguageClassifierBERT:
     """Language Classifier using XLM-RoBERTa for sequence classification."""
 
-    def __init__(self, model_name='xlm-roberta-base', max_len=64, batch_size=64, epochs=15):
+    def __init__(self, model_name='xlm-roberta-base', max_len=128, batch_size=128, epochs=18):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         logger.info(f"Using device: {self.device}")
 
@@ -86,7 +86,7 @@ class LanguageClassifierBERT:
         dataset = LanguageDataset(encodings, y)
         train_loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
 
-        optimizer = torch.optim.AdamW(self.model.parameters(), lr=5e-5)
+        optimizer = torch.optim.AdamW(self.model.parameters(), lr=2e-4)
         total_steps = len(train_loader) * self.epochs
         scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=0, num_training_steps=total_steps)
 
@@ -111,6 +111,10 @@ class LanguageClassifierBERT:
 
                 # Backward pass and optimization
                 scaler.scale(loss).backward()
+                
+                # Gradient clipping
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+
                 scaler.step(optimizer)
                 scaler.update()
 
@@ -173,7 +177,6 @@ class LanguageClassifierBERT:
         logger.info(f"Loading test dataset from {test_dataset_path}...")
         test_data = pd.read_csv(test_dataset_path)
 
-        # Generate 'Id' column if it doesn't exist
         if 'ID' not in test_data.columns:
             test_data['ID'] = range(1, len(test_data) + 1)
 
@@ -194,13 +197,13 @@ class LanguageClassifierBERT:
         logger.info(f"Submission file zipped to {zip_file_path}")
 
     @staticmethod
-    def remove_duplicates(data: pd.DataFrame) -> pd.DataFrame:
-        """Removes duplicate rows from the dataset."""
-        logger.info("Removing duplicate rows from the dataset...")
+    def handle_missing_labels(data: pd.DataFrame) -> pd.DataFrame:
+        """Removes rows with missing labels from the dataset."""
+        logger.info("Removing rows with missing labels...")
         initial_row_count = data.shape[0]
-        data = data.drop_duplicates()
+        data = data.dropna(subset=['Label'])
         final_row_count = data.shape[0]
-        logger.info(f"Removed {initial_row_count - final_row_count} duplicate rows.")
+        logger.info(f"Removed {initial_row_count - final_row_count} rows with missing labels.")
         return data
 
 
@@ -221,7 +224,7 @@ def main():
             raise ValueError("Please provide a training dataset path with --train_dataset when training the model.")
         logger.info(f"Loading training dataset from {args.train_dataset}...")
         data = pd.read_csv(args.train_dataset)
-        data = classifier.remove_duplicates(data)
+        data = classifier.handle_missing_labels(data)
         encodings, y = classifier.preprocess_data(data)
         classifier.train(encodings, y)
         logger.info("Model trained successfully.")
